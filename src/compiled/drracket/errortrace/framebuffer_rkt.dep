@@ -1,0 +1,1 @@
+("6.12" ("3024dc9e98a772494b4b0df032649b2a5d63f5f6" . "e961adc2ff6bb31de2bb6f16fa8928866bef8cb5") #"C:\\projects\\scheme\\raster-scheme\\src\\maths.rkt" (collects #"errortrace" #"errortrace-key.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt"))
