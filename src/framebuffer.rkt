@@ -2,13 +2,13 @@
 
 (require "maths.rkt")
 
-(provide make-framebuffer)
-(provide framebuffer-width)
-(provide framebuffer-height)
-(provide framebuffer-write!)
-(provide framebuffer-read-color)
-(provide framebuffer-read-depth)
-(provide framebuffer-get-data)
+(provide make-framebuffer
+         framebuffer-width
+         framebuffer-height
+         framebuffer-write!
+         framebuffer-read-color
+         framebuffer-read-depth
+         framebuffer-get-data)
 
 
 ;;generic 2D buffer (used for depth buffer)
@@ -36,7 +36,7 @@
             (data (make-bytes (* 4 width height ) 0 )) 
         )
         (lambda (s)
-             ( cond 
+            (cond 
                       ( (= s 0) width)
                       ( (= s 1) height)
                       ( (= s 2) data)
