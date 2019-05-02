@@ -19,7 +19,7 @@
 
 (provide make-triangle
          triangle-get-vertex
-         barycentric
+         barycentric-coords
          point-in-triangle?
          aabb-from-triangle)
 
@@ -31,7 +31,7 @@
 
 
 ;aabb
-(define (make-aabb minCoord maxCoord) ( cons minCoord maxCoord ))
+(define (make-aabb minCoord maxCoord) (cons minCoord maxCoord))
 (define (aabb-min aabb) (car aabb))
 (define (aabb-max aabb) (cdr aabb))
 (define (aabb-min-x aabb) (vec3-x (aabb-min aabb) ) )
@@ -41,10 +41,10 @@
  
 
 (define (make-vertex position normal color uv)
-    (lambda(s)(cond ( (= s 0) position)
-                    ( (= s 1) normal)
-                    ( (= s 2) color)
-                    ( (= s 2) uv))
+    (lambda (s) (cond ( (= s 0) position )
+                    ( (= s 1) normal )
+                    ( (= s 2) color )
+                    ( (= s 2) uv ) )
     )
 )
 
@@ -54,7 +54,7 @@
 
 
 (define (make-triangle v0 v1 v2)
-    (lambda(s)(cond ( (= s 0) v0)
+    (lambda (s) (cond ( (= s 0) v0)
                       ( (= s 1) v1)
                       ( (= s 2) v2))
     )
@@ -62,13 +62,13 @@
 
 (define (triangle-get-vertex triangle i)(triangle i))
 
-(define (barycentric p a b c) 
+(define (barycentric-coords p a b c) 
     (let(
             (v0  (vec3-sub b a) )
             (v1  (vec3-sub c a) )
             (v2  (vec3-sub p a) )
         )
-        (let (
+        (let(
                 (d00 (vec3-dot v0 v0) )
                 (d01 (vec3-dot v0 v1) )
                 (d11 (vec3-dot v1 v1) )
@@ -76,10 +76,11 @@
                 (d21 (vec3-dot v2 v1) )
             )
             (let((denom (- (* d00 d11) (* d01 d01))))
-                (let((v (/ (- (* d11 d20) (* d01 d21) ) denom))
-                    (w (/ (- (* d00 d21) (* d01 d20) ) denom)))
-                
-                (make-vec3 (- 1 (+ v w ) ) v w )
+                (let(
+                        (v (/ (- (* d11 d20) (* d01 d21) ) denom))
+                        (w (/ (- (* d00 d21) (* d01 d20) ) denom))
+                    )                
+                    (make-vec3 (- 1 (+ v w ) ) v w )
                 )
             )
         )
@@ -87,22 +88,21 @@
 )
 
 (define (point-in-triangle? p a b c)
-    (let ( (coords (barycentric p a b c) ) )
-    
-      (and (>= (vec3-x coords) 0) (< (vec3-x coords) 1)
+    (let ( (coords (barycentric-coords p a b c) ) )
+        (and (>= (vec3-x coords) 0) (< (vec3-x coords) 1)
            (>= (vec3-y coords) 0) (< (vec3-y coords) 1)
            (>= (vec3-z coords) 0) (< (vec3-z coords) 1)
-       )
+        )
     )
 )
 
 (define (aabb-from-triangle v0 v1 v2) 
-    ( make-aabb (make-vec3 (min (vec3-x v0) (vec3-x v1) (vec3-x v2) )
-                            (min (vec3-y v0) (vec3-y v1) (vec3-y v2) )
-                            (min (vec3-z v0) (vec3-z v1) (vec3-z v2) ))
-                (make-vec3 (max (vec3-x v0) (vec3-x v1) (vec3-x v2) )
-                            (max (vec3-y v0) (vec3-y v1) (vec3-y v2) )
-                            (max (vec3-z v0) (vec3-z v1) (vec3-z v2) ))
+    (make-aabb (make-vec3 (min (vec3-x v0) (vec3-x v1) (vec3-x v2) )
+                          (min (vec3-y v0) (vec3-y v1) (vec3-y v2) )
+                          (min (vec3-z v0) (vec3-z v1) (vec3-z v2) ))
+               (make-vec3 (max (vec3-x v0) (vec3-x v1) (vec3-x v2) )
+                          (max (vec3-y v0) (vec3-y v1) (vec3-y v2) )
+                          (max (vec3-z v0) (vec3-z v1) (vec3-z v2) ))
     )
 )
 
@@ -110,7 +110,7 @@
 
 
 (define (make-mesh vertices indices)
-    (lambda(s) ( cond ( (= s 0) vertices)
+    (lambda (s) ( cond ( (= s 0) vertices)
                       ( (= s 1) indices))
     )
 )

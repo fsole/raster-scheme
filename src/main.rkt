@@ -7,7 +7,9 @@
 (require "maths.rkt")
 (require "mesh.rkt")
 (require "framebuffer.rkt")
+(require "pipeline.rkt")
 (require "rasterizer.rkt")
+
 
 ;;Global variables
 (define *window-name* "raster-scheme")
@@ -18,15 +20,17 @@
                                      (make-vertex (make-vec3 -0.5 -0.5 1.0) (make-vec3 0 0 1) (make-vec3 1 0 0) (make-vec2 0 0) )
                                      (make-vertex (make-vec3 0.5 -0.5 1.0) (make-vec3 0 0 1) (make-vec3 1 0 0) (make-vec2 0 0) )) (list 0 1 2 1 3 2) ) )
 
+(define *pipeline* (make-pipeline (lambda (v) v ) (lambda (f) (make-vec4 0.0 0.0 1.0 1.0)) *framebuffer* ))
 
 
-(define (present-frame framebuffer)(let ((width (framebuffer-width framebuffer))
-                                         (height (framebuffer-height framebuffer))
-                                         (data (framebuffer-get-data framebuffer))
-                                        )
-                                        (send *bitmap* set-argb-pixels 0 0 width height data)))
+(define (present-frame! framebuffer)(let (  (width (framebuffer-width framebuffer))
+                                            (height (framebuffer-height framebuffer))
+                                            (data (framebuffer-get-data framebuffer))
+                                         )
+                                         (send *bitmap* set-argb-pixels 0 0 width height data)))
 
-(define ( render-scene )  (begin (render-mesh  *quad-mesh* *framebuffer*) (present-frame *framebuffer*)))
+
+(define ( render-scene ) (begin (render-mesh  *quad-mesh*  *pipeline*) (present-frame! *framebuffer*)))
 
 ;;GL callbacks
 (define (resize w h) (glViewport 0 0 w h))
@@ -43,7 +47,6 @@
   (glCallList (bitmap->gl-list *bitmap*))  
 )
 
-
 (define my-canvas%
   (class* canvas% ()
     (inherit with-gl-context swap-gl-buffers)
@@ -53,9 +56,9 @@
       (with-gl-context (lambda () (resize width height) (on-paint))))
     (super-instantiate () (style '(gl)))))
  
-(define win (new frame% [label *window-name*]
+(define *win* (new frame% [label *window-name*]
                         [min-width 300] [min-height 300]))
-(define gl  (new my-canvas% [parent win]))
+(define *gl*  (new my-canvas% [parent *win*]))
 
  
-(send win show #t)
+(send *win* show #t)

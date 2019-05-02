@@ -59,15 +59,15 @@
 (define (vec4-sub v0 v1) (make-vec4 (- (vec4-x v0) (vec4-x v1)) (- (vec4-y v0) (vec4-y v1)) (- (vec4-z v0) (vec4-z v1)) (- (vec4-w v0) (vec4-w v1))))
 (define (vec4-dot v0 v1) (+ (* (vec4-x v0) (vec4-x v1)) (* (vec4-y v0) (vec4-y v1)) (* (vec4-z v0) (vec4-z v1)) (* (vec4-w v0) (vec4-w v1))))
 
-(define (make-mat4 v0 v1 v2 v3) ( 
-    lambda(s) (cond(( = s 0 ) v0 )
+(define (make-mat4 v0 v1 v2 v3) 
+    (lambda (s) (cond(( = s 0 ) v0 )
                    (( = s 1 ) v1 )
                    (( = s 2 ) v2 )
                    (( = s 3 ) v3 ))))
                                                  
 (define (mat4-get-row mat row) (mat row))
-(define (vec4-mat4-mul v mat) ( 
-    make-vec4 (vec4-dot v (mat4-get-row mat 0 ))
+(define (vec4-mat4-mul v mat)
+    (make-vec4 (vec4-dot v (mat4-get-row mat 0 ))
               (vec4-dot v (mat4-get-row mat 1 ))
               (vec4-dot v (mat4-get-row mat 2 ))
               (vec4-dot v (mat4-get-row mat 3 ))))
