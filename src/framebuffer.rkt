@@ -26,8 +26,8 @@
 
 (define (buffer2D-width buffer ) (buffer 0) )
 (define (buffer2D-height buffer ) (buffer 1) )
-(define (buffer2D-read buffer x y ) (vector-ref (buffer 2) (inexact->exact (+ x (* y (buffer2D-width buffer))))))
-(define (buffer2D-write buffer x y value) (vector-set! (buffer 2) (inexact->exact (+ x (* y (buffer2D-width buffer)))) value))
+(define (buffer2D-read buffer x y ) (vector-ref (buffer 2) (max 0  (inexact->exact (+ x (* y (buffer2D-width buffer)))))))
+(define (buffer2D-write buffer x y value) (vector-set! (buffer 2) (max 0 (inexact->exact (+ x (* y (buffer2D-width buffer))))) value))
 
 
 ;;2D bytebuffer (used for color render targets)
@@ -49,7 +49,7 @@
 (define (byte-buffer2D-height buffer ) (buffer 1) )
 (define (byte-buffer2D-read buffer x y )
     (define (byte->num value) (/ value 255.0))
-    (let ( (index (inexact->exact (* 4 (+ x (* y (byte-buffer2D-width buffer)))) )) )
+    (let ( (index (max 0 (inexact->exact (* 4 (+ x (* y (byte-buffer2D-width buffer))))))))
         (make-vec4 (byte->num (bytes-ref (buffer 2) ( + index 1)))
                    (byte->num (bytes-ref (buffer 2) ( + index 2)))
                    (byte->num (bytes-ref (buffer 2) ( + index 3)))
@@ -62,11 +62,11 @@
         (cond
             ( ( < value 0.0 ) 0)
             ( ( > value 1.0 ) 255)
-            (else (floor (inexact->exact (* value 255.0)) ))
+            (else (inexact->exact (* value 255.0)))
         )
     )
 
-    ( let ( (index (inexact->exact (* 4 (+ x (* y (byte-buffer2D-width buffer)))) ) ))
+    ( let ( (index  (inexact->exact (* 4 (+ x (* y (byte-buffer2D-width buffer))) ) )))
         (begin 
             (bytes-set! (buffer 2) index (num->byte (vec4-w value)))
             (bytes-set! (buffer 2) (+ index 1) (num->byte (vec4-x value)))

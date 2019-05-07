@@ -14,7 +14,8 @@
 (provide make-vertex
          vertex-position
          vertex-normal
-         vertex-uv)
+         vertex-uv
+         vertex-color)
 
 
 (provide make-triangle
@@ -43,14 +44,15 @@
 (define (make-vertex position normal color uv)
     (lambda (s) (cond ( (= s 0) position )
                     ( (= s 1) normal )
-                    ( (= s 2) color )
-                    ( (= s 2) uv ) )
+                    ( (= s 2) uv )
+                    ( (= s 3) color ) )
     )
 )
 
 (define (vertex-position v) (v 0))
 (define (vertex-normal v) (v 1))
 (define (vertex-uv v) (v 2))
+(define (vertex-color v) (v 3))
 
 
 (define (make-triangle v0 v1 v2)
