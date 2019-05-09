@@ -8,7 +8,8 @@
          framebuffer-write!
          framebuffer-read-color
          framebuffer-read-depth
-         framebuffer-get-data)
+         framebuffer-get-data
+         framebuffer-clear!)
 
 
 ;;generic 2D buffer (used for depth buffer)
@@ -28,7 +29,14 @@
 (define (buffer2D-height buffer ) (buffer 1) )
 (define (buffer2D-read buffer x y ) (vector-ref (buffer 2) (max 0  (inexact->exact (+ x (* y (buffer2D-width buffer)))))))
 (define (buffer2D-write buffer x y value) (vector-set! (buffer 2) (max 0 (inexact->exact (+ x (* y (buffer2D-width buffer))))) value))
-
+(define (buffer2D-clear buffer value) 
+    (define (clear index) 
+        (if (< index (*  (buffer 0)  (buffer 1) ))
+            (vector-set! (buffer 2) index value) (clear (+ index 1))
+        )
+    )
+    (clear 0)
+)
 
 ;;2D bytebuffer (used for color render targets)
 (define (make-byte-buffer2D width height)
@@ -76,6 +84,18 @@
     )
 )
 
+(define (byte-buffer2D-clear buffer value)
+    (define (clear x0 y0 x1 y1)
+        (define (outer-loop i)
+          (define (inner-loop j) ( cond( (< j y1) (begin (byte-buffer2D-write buffer i j value ) (inner-loop (+ j 1) ) ) ) ) )        
+            ( cond ( (< i x1) (begin (inner-loop y0) (outer-loop (+ i 1) ) ) ) ) 
+        )
+        (outer-loop x0)
+    )
+
+    (clear 0 0 (buffer 0 ) (buffer 1) )
+)
+
 (define (byte-buffer2D-get-data buffer )( buffer 2 ) )
 
 ;;framebuffer implementation
@@ -102,9 +122,13 @@
 (define (framebuffer-get-data fb) ( byte-buffer2D-get-data (fb 2) ))
 (define (framebuffer-write! fb x y color depth depth-test)
     (if (depth-test depth (framebuffer-read-depth fb x y))
-        (begin (byte-buffer2D-write (fb 2) x y color) (buffer2D-write (fb 3) x y depth) #t)
-        #f
+            (begin (byte-buffer2D-write (fb 2) x y color) (buffer2D-write (fb 3) x y depth) #t)
+            #f
     )
 )
 
+(define (framebuffer-clear! fb clear-color depth)
+    (byte-buffer2D-clear (fb 2) clear-color)
+    (buffer2D-clear (fb 3) depth)
+)
           

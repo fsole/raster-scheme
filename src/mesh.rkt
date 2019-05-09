@@ -10,13 +10,11 @@
          aabb-max-x
          aabb-max-y)
  
-
 (provide make-vertex
          vertex-position
          vertex-normal
          vertex-uv
          vertex-color)
-
 
 (provide make-triangle
          triangle-get-vertex

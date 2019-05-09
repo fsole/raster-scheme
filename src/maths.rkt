@@ -19,6 +19,7 @@
          vec3-dot
          vec3-transform-point
          vec3-transform-vector
+         vec3->vec4
          vec3-print)
 
 (provide make-vec4
@@ -31,6 +32,7 @@
          vec4-sub
          vec4-dot
          vec4-mat4-mul
+         vec4->vec3
          vec4-print)
 
 (provide make-quat
@@ -40,6 +42,7 @@
          quat-w
          quat-from-axis-angle
          quat-normalize
+         quat-identity
          quat-print)
 
 (provide make-mat3
@@ -55,11 +58,13 @@
          mat4-get-value
          mat4-mat4-mul
          mat4-inverse
+         mat4-det
          mat4-create-transform
          mat4-create-perspective-projection
          mat4-print
          mat4-identity)
 
+(provide clamp)
 
 ;;;;;;;;;;;;
 ;;  vec2  ;;
@@ -91,6 +96,7 @@
 (define (vec3-dot v0 v1) (+ (* (vec3-x v0) (vec3-x v1)) (* (vec3-y v0) (vec3-y v1)) (* (vec3-z v0) (vec3-z v1))))
 (define (vec3-transform-point v m)(vec4-mat4-mul (make-vec4 (vec3-x v) (vec3-y v) (vec3-z v) 1.0 ) m ))
 (define (vec3-transform-vector v m)(vec4-mat4-mul (make-vec4 (vec3-x v) (vec3-y v) (vec3-z v) 0.0 ) m ))
+(define (vec3->vec4 v w) (make-vec4 (v 0) (v 1) (v 2) w ))
 (define (vec3-print v )(begin (display (v 0)) (display "  ") (display (v 1)) (display "  ") (display (v 2)) ))
 
 ;;;;;;;;;;;;
@@ -108,6 +114,7 @@
 (define (vec4-add v0 v1) (make-vec4 (+ (vec4-x v0) (vec4-x v1)) (+ (vec4-y v0) (vec4-y v1)) (+ (vec4-z v0) (vec4-z v1)) (+ (vec4-w v0) (vec4-w v1))))
 (define (vec4-sub v0 v1) (make-vec4 (- (vec4-x v0) (vec4-x v1)) (- (vec4-y v0) (vec4-y v1)) (- (vec4-z v0) (vec4-z v1)) (- (vec4-w v0) (vec4-w v1))))
 (define (vec4-dot v0 v1) (+ (* (vec4-x v0) (vec4-x v1)) (* (vec4-y v0) (vec4-y v1)) (* (vec4-z v0) (vec4-z v1)) (* (vec4-w v0) (vec4-w v1))))
+(define (vec4->vec3 v) (make-vec3 (v 0) (v 1) (v 2) ))
 (define (vec4-print v )(begin (display (v 0)) (display "  ") (display (v 1)) (display "  ") (display (v 2)) (display "  ")(display (v 3)) ))
 
 
@@ -137,6 +144,7 @@
 )
 
 (define (quat-normalize q) ( let ((length (sqrt (vec4-dot q q)))) (make-quat (/ (quat-x q) length) (/ (quat-y q) length) (/ (quat-z q) length) (/ (quat-w q) length) )))
+(define quat-identity (make-quat 0 0 0 1) )
 (define (quat-print v )(begin (display (v 0)) (display "  ") (display (v 1)) (display "  ") (display (v 2)) (display "  ")(display (v 3)) ))
 
 ;;;;;;;;;;;;
@@ -281,6 +289,41 @@
     )
 )
 
+(define (mat4-det m)
+    (let 
+        ( 
+            (m0 (mat4-get-value m 0 0) )
+            (m1 (mat4-get-value m 0 1) )
+            (m2 (mat4-get-value m 0 2) )
+            (m3 (mat4-get-value m 0 3) )
+
+            (m4 (mat4-get-value m 1 0) )
+            (m5 (mat4-get-value m 1 1) )
+            (m6 (mat4-get-value m 1 2) )
+            (m7 (mat4-get-value m 1 3) )
+
+            (m8 (mat4-get-value m  2 0) )
+            (m9 (mat4-get-value m  2 1) )
+            (m10 (mat4-get-value m 2 2) )
+            (m11(mat4-get-value m  2 3) )
+
+            (m12 (mat4-get-value m 3 0) )
+            (m13 (mat4-get-value m 3 1) )
+            (m14 (mat4-get-value m 3 2) )
+            (m15 (mat4-get-value m 3 3) )
+        )
+        (let 
+            (
+                (r0  (- (+ (* m5 m10 m15) (* m9 m14 m7) (* m13 m6 m11)) (+ (* m5 m11 m14) (* m9 m6 m15 ) (* m13 m7 m10))))
+                (r1  (- (+ (* m4 m11 m14) (* m8 m6 m15) (* m12 m7 m10)) (+ (* m4 m10 m15) (* m8 m7 m14 ) (* m12 m6 m11))))
+                (r2  (- (+ (* m4 m9 m15 ) (* m8 m7 m13) (* m12 m5 m11)) (+ (* m12 m7 m9 ) (* m4 m11 m13) (* m8 m5 m15 ))))
+                (r3 (- (+ (* m4 m10 m13) (* m8 m5 m14) (* m12 m6 m9 )) (+ (* m4 m9 m14 ) (* m8 m6 m13 ) (* m12 m5 m10))))                
+            )
+            (+ (* m0 r0 )(* m1 r1)(* m2 r2)(* m3 r3) )
+        )
+    )
+)
+
 (define (mat4-create-transform pos scale rot)
     (let(
             (xx (* (quat-x rot) (quat-x rot) ))
@@ -362,10 +405,18 @@
          (make-mat4 v0 v1 v2 v3)))
 
 (define (vec4-mat4-mul v mat)
-    (make-vec4 (vec4-dot v (mat4-get-row mat 0 ))
-              (vec4-dot v (mat4-get-row mat 1 ))
-              (vec4-dot v (mat4-get-row mat 2 ))
-              (vec4-dot v (mat4-get-row mat 3 ))))
+    (make-vec4 (vec4-dot v (mat4-get-column mat 0 ))
+              (vec4-dot v (mat4-get-column mat 1 ))
+              (vec4-dot v (mat4-get-column mat 2 ))
+              (vec4-dot v (mat4-get-column mat 3 ))))
 
 
 (define mat4-identity (make-mat4 (make-vec4 1 0 0 0) (make-vec4 0 1 0 0) (make-vec4 0 0 1 0) (make-vec4 0 0 0 1) ) )
+
+(define (clamp v min max)
+    (cond 
+        ( (< v min ) min )
+        ( (> v max ) max )
+        (else v)
+    )
+)
