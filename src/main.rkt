@@ -10,7 +10,7 @@
 (require "pipeline.rkt")
 (require "rasterizer.rkt")
 
-(define *color* 1.0)
+
 ;;Global variables
 (define *window-name* "raster-scheme")
 (define *window-width* 300)
@@ -18,25 +18,34 @@
 (define *framebuffer-width* 200)
 (define *framebuffer-height* 200)
 
-(define *camera-position* (make-vec3 0.0 0.0 -1.0) )
+(define *camera-position* (make-vec3 0.0 0.0 -4.0) )
 (define *camera-orientation* (quat-from-axis-angle (make-vec3 0 1 0) 0.0 ))
+(define *object-angle* 0.0)
+(define *object-angle-step* 0.1)
 
 (define *framebuffer* (make-framebuffer *framebuffer-width* *framebuffer-height*))
 (define *bitmap* (make-bitmap (framebuffer-width *framebuffer*) (framebuffer-height *framebuffer*) #t) )
-(define *quad-mesh* (make-mesh (list (make-vertex (make-vec4 -0.5 0.5 1.0 1.0) (make-vec3 0 0 1) (make-vec3 1 0 0) (make-vec2 0 0) )
-                                     (make-vertex (make-vec4 0.5 0.5 1.0 1.0) (make-vec3 0 0 1) (make-vec3 1 0 0) (make-vec2 0 0) )
-                                     (make-vertex (make-vec4 -0.5 -0.5 1.0 1.0) (make-vec3 0 0 1) (make-vec3 1 0 0) (make-vec2 0 0) )
-                                     (make-vertex (make-vec4 0.5 -0.5 1.0 1.0) (make-vec3 0 0 1) (make-vec3 1 0 0) (make-vec2 0 0) )) 
-                                     (list 0 2 1 2 3 1) ) )
+(define *cube-mesh* (make-mesh (list (make-vertex (make-vec4 -0.5  0.5 -0.5 1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0))
+                                     (make-vertex (make-vec4  0.5  0.5 -0.5 1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0))
+                                     (make-vertex (make-vec4 -0.5 -0.5 -0.5 1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0))
+                                     (make-vertex (make-vec4  0.5 -0.5 -0.5 1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0))
+                                     (make-vertex (make-vec4 -0.5  0.5  0.5 1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0))
+                                     (make-vertex (make-vec4  0.5  0.5  0.5 1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0))
+                                     (make-vertex (make-vec4 -0.5 -0.5  0.5 1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0))
+                                     (make-vertex (make-vec4  0.5 -0.5  0.5 1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0))) 
+                                     (list 0 2 1 1 2 3
+                                           1 3 5 5 3 7
+                                           5 7 4 4 7 6  
+                                           4 6 0 0 6 2) ) )
 
-(define *triangle-mesh* (make-mesh (list (make-vertex (make-vec3 -0.5 0.5 1.0) (make-vec3 0 0 1) (make-vec3 1 0 0) (make-vec2 0 0) )
-                                         (make-vertex (make-vec3 0.5 0.5 1.0) (make-vec3 0 0 1) (make-vec3 1 0 0) (make-vec2 0 0) )
-                                         (make-vertex (make-vec3 -0.5 -0.5 1.0) (make-vec3 0 0 1) (make-vec3 1 0 0) (make-vec2 0 0) ))
+(define *triangle-mesh* (make-mesh (list (make-vertex (make-vec3 -0.5  0.5 1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0))
+                                         (make-vertex (make-vec3  0.5  0.5 1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0))
+                                         (make-vertex (make-vec3 -0.5 -0.5 1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0)))
                                          (list 0 2 1 ) ) )
 
 (define *projection-matrix* (mat4-create-perspective-projection 1.2 1.0 0.1 100.0))
-
-(define *model-matrix* (mat4-create-transform (make-vec3 0.0 0.0 0.0) (make-vec3 1.0 1.0 1.0 ) (quat-from-axis-angle (make-vec3 0 0 1) 0.0) ))
+(define *view-matrix* (mat4-inverse (mat4-create-transform *camera-position* (make-vec3 1.0 1.0 1.0 ) *camera-orientation* ) ))
+(define *model-matrix* (mat4-create-transform (make-vec3 0.0 0.0 0.0) (make-vec3 1.0 1.0 1.0 ) (quat-from-axis-angle (make-vec3 0 1 0) *object-angle*) ))
 
 (define (vertex-shader v model-view-projection)
   ( let ((pos (vec4-mat4-mul (vertex-position v) model-view-projection) ) )
@@ -47,41 +56,29 @@
 (define (fragment-shader f) (make-vec4 0.0 0.0 1.0 1.0))
 (define *pipeline* (make-pipeline vertex-shader fragment-shader *framebuffer* ))
 
-(define (present-frame! framebuffer )
-  (let (  
-          (width (framebuffer-width framebuffer))
-          (height (framebuffer-height framebuffer))
-          (data (framebuffer-get-data framebuffer))
-        )
-        (send *bitmap* set-argb-pixels 0 0 width height data)
+(define (update-scene) 
+  (set! *view-matrix* (mat4-inverse (mat4-create-transform *camera-position* (make-vec3 1.0 1.0 1.0 ) *camera-orientation* ) ))
+  (set! *object-angle* (+ *object-angle* *object-angle-step* ))
+  (set! *model-matrix* (mat4-create-transform (make-vec3 0.0 0.0 0.0) (make-vec3 1.0 1.0 1.0 ) (quat-from-axis-angle (make-vec3 0 1 0) *object-angle*) ))
+)
+
+(define (render-scene) 
+  (let ( (mvp (mat4-mat4-mul (mat4-mat4-mul *model-matrix* *view-matrix*) *projection-matrix* ) ))
+        (framebuffer-clear! *framebuffer* (make-vec4 1 1 1 1) 0)     
+        (render-mesh *cube-mesh* mvp *pipeline*)
   )
 )
 
-(define ( render-scene ) 
-  (let( ( view-matrix (mat4-inverse (mat4-create-transform *camera-position* (make-vec3 1.0 1.0 1.0 ) *camera-orientation* ) ) ))
-      (let ( (mvp (mat4-mat4-mul (mat4-mat4-mul *model-matrix* view-matrix) *projection-matrix* ) ))
-        (framebuffer-clear! *framebuffer* (make-vec4 0 0 0 1) 0)     
-        (render-mesh *quad-mesh* mvp *pipeline*)
-        (present-frame! *framebuffer*)
-      )
-  )
-)
- 
+
 ;;Window and OpenGL context
 (define gl-canvas%
   (class* canvas% ()
     (inherit refresh with-gl-context swap-gl-buffers)
 
     (define/override (on-paint)
-      (with-gl-context (lambda () (render-scene)
-                                  (glMatrixMode GL_PROJECTION)
-                                  (glLoadIdentity)
-                                  (glOrtho 0.0 1.0 0.0 1.0 -1.0 1.0)
-                                  (glMatrixMode GL_MODELVIEW)
-                                  (glLoadIdentity)
-                                  (glCallList (bitmap->gl-list *bitmap*))
-                                  (swap-gl-buffers)
-                                  (queue-callback (lambda () (refresh)) #f))
+      (with-gl-context (lambda () (update-scene)
+                                  (render-scene)
+                                  (present-frame *framebuffer*))
       )
     )
     
@@ -90,7 +87,25 @@
                                   (on-paint))
       )
     )
-    
+ 
+    (define/private (present-frame framebuffer )
+      (let(  
+            (width (framebuffer-width framebuffer))
+            (height (framebuffer-height framebuffer))
+            (data (framebuffer-get-data framebuffer))
+          )
+          (send *bitmap* set-argb-pixels 0 0 width height data)
+          (glMatrixMode GL_PROJECTION)
+          (glLoadIdentity)
+          (glOrtho 0.0 1.0 0.0 1.0 -1.0 1.0)
+          (glMatrixMode GL_MODELVIEW)
+          (glLoadIdentity)
+          (glCallList (bitmap->gl-list *bitmap*))
+          (swap-gl-buffers)
+          (queue-callback (lambda () (refresh)) #f)
+      )
+    )
+
     (define/override (on-char e)
         (case (send e get-key-code)
           ((left)

@@ -50,6 +50,7 @@
          mat3-get-column
          mat3-get-value
          mat3-inverse
+         mat3-det
          mat3-print)
 
 (provide make-mat4
@@ -200,6 +201,21 @@
             )            
         )
     )
+)
+
+(define (mat3-det m )
+    (let( 
+            (m0 (mat3-get-value m 0 0))
+            (m1 (mat3-get-value m 0 1))
+            (m2 (mat3-get-value m 0 2))
+            (m3 (mat3-get-value m 1 0))
+            (m4 (mat3-get-value m 1 1))
+            (m5 (mat3-get-value m 1 2))
+            (m6 (mat3-get-value m 2 0))
+            (m7 (mat3-get-value m 2 1))
+            (m8 (mat3-get-value m 2 2))
+        )
+        (- (+ (* m0 m4 m8) (* m3 m7 m2) (* m6 m1 m5)) (+ (* m2 m4 m6) (* m5 m7 m0 ) (* m3 m1 m8))))
 )
 
 (define (mat3-print m )(begin (vec3-print (mat3-get-row m 0)) (display "\n") 

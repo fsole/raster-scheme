@@ -39,7 +39,7 @@
 (define (aabb-max-y aabb) (vec3-y (aabb-max aabb) ) )
  
 
-(define (make-vertex position normal color uv)
+(define (make-vertex position normal uv color)
     (lambda (s) (cond ( (= s 0) position )
                     ( (= s 1) normal )
                     ( (= s 2) uv )

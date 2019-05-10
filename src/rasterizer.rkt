@@ -28,11 +28,11 @@
         (outer-loop x0))
                                     
       (let (
-              ( aabb (aabb-from-triangle (vec4-scale v0-device (/ 1.0 (vec4-w v0-device)))
+              (aabb (aabb-from-triangle (vec4-scale v0-device (/ 1.0 (vec4-w v0-device)))
                                          (vec4-scale v1-device (/ 1.0 (vec4-w v1-device)))
                                          (vec4-scale v2-device (/ 1.0 (vec4-w v2-device))))) 
 
-              ( vertex-matrix-inverse (mat3-inverse (make-mat3 (make-vec3 (vec4-x v0-device) (vec4-y v0-device) (vec4-w v0-device))
+              (vertex-matrix-inverse (mat3-inverse (make-mat3 (make-vec3 (vec4-x v0-device) (vec4-y v0-device) (vec4-w v0-device))
                                                                (make-vec3 (vec4-x v1-device) (vec4-y v1-device) (vec4-w v1-device))
                                                                (make-vec3 (vec4-x v2-device) (vec4-y v2-device) (vec4-w v2-device)))))
            )
@@ -46,12 +46,13 @@
                       (framebuffer-write! framebuffer (floor (vec3-x sample)) (floor (vec3-y sample)) (make-vec4 0 0 1 1) 0 (lambda (s t) #t))
                   )
                   #f))
-
-          (loop (clamp (aabb-min-x aabb) 0.0 (framebuffer-width framebuffer)) 
+          (if ( < (mat3-det vertex-matrix-inverse ) 0.0 )
+            (loop (clamp (aabb-min-x aabb) 0.0 (framebuffer-width framebuffer)) 
                 (clamp (aabb-min-y aabb) 0.0 (framebuffer-height framebuffer)) 
                 (clamp (aabb-max-x aabb) 0.0 (framebuffer-width framebuffer)) 
                 (clamp (aabb-max-y aabb) 0.0 (framebuffer-width framebuffer))
                 setpixel) 
+            #f)
       )
   )
 )
