@@ -17,6 +17,7 @@
          vec3-add
          vec3-sub
          vec3-dot
+         vec3-mat3-mul
          vec3-transform-point
          vec3-transform-vector
          vec3->vec4
@@ -95,6 +96,11 @@
 (define (vec3-add v0 v1) (make-vec3 (+ (vec3-x v0) (vec3-x v1)) (+ (vec3-y v0) (vec3-y v1)) (+ (vec3-z v0) (vec3-z v1))))
 (define (vec3-sub v0 v1) (make-vec3 (- (vec3-x v0) (vec3-x v1)) (- (vec3-y v0) (vec3-y v1)) (- (vec3-z v0) (vec3-z v1))))
 (define (vec3-dot v0 v1) (+ (* (vec3-x v0) (vec3-x v1)) (* (vec3-y v0) (vec3-y v1)) (* (vec3-z v0) (vec3-z v1))))
+(define (vec3-mat3-mul v mat)
+    (make-vec3 (vec3-dot v (mat3-get-column mat 0 ))
+              (vec3-dot v (mat3-get-column mat 1 ))
+              (vec3-dot v (mat3-get-column mat 2 ))))
+
 (define (vec3-transform-point v m)(vec4-mat4-mul (make-vec4 (vec3-x v) (vec3-y v) (vec3-z v) 1.0 ) m ))
 (define (vec3-transform-vector v m)(vec4-mat4-mul (make-vec4 (vec3-x v) (vec3-y v) (vec3-z v) 0.0 ) m ))
 (define (vec3->vec4 v w) (make-vec4 (v 0) (v 1) (v 2) w ))
@@ -221,12 +227,6 @@
 (define (mat3-print m )(begin (vec3-print (mat3-get-row m 0)) (display "\n") 
                               (vec3-print (mat3-get-row m 1)) (display "\n") 
                               (vec3-print (mat3-get-row m 2))))
-
-
-(define (vec3-mat3-mul v mat)
-    (make-vec3 (vec3-dot v (mat3-get-row mat 0 ))
-              (vec3-dot v (mat3-get-row mat 1 ))
-              (vec3-dot v (mat3-get-row mat 2 ))))
 
 
 ;;;;;;;;;;;;

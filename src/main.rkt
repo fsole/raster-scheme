@@ -36,36 +36,47 @@
                                      (list 0 2 1 1 2 3
                                            1 3 5 5 3 7
                                            5 7 4 4 7 6  
-                                           4 6 0 0 6 2) ) )
+                                           4 6 0 0 6 2
+                                           4 0 5 5 0 1
+                                           2 6 3 3 6 7) ) )
 
-(define *triangle-mesh* (make-mesh (list (make-vertex (make-vec3 -0.5  0.5 1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0))
-                                         (make-vertex (make-vec3  0.5  0.5 1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0))
-                                         (make-vertex (make-vec3 -0.5 -0.5 1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0)))
-                                         (list 0 2 1 ) ) )
 
 (define *projection-matrix* (mat4-create-perspective-projection 1.2 1.0 0.1 100.0))
 (define *view-matrix* (mat4-inverse (mat4-create-transform *camera-position* (make-vec3 1.0 1.0 1.0 ) *camera-orientation* ) ))
-(define *model-matrix* (mat4-create-transform (make-vec3 0.0 0.0 0.0) (make-vec3 1.0 1.0 1.0 ) (quat-from-axis-angle (make-vec3 0 1 0) *object-angle*) ))
+
+(define *model-matrix0* (mat4-create-transform (make-vec3 -1.0 0.0 0.0) (make-vec3 1.0 1.0 1.0 ) (quat-from-axis-angle (make-vec3 0 1 0) *object-angle*) ))
+(define *model-matrix1* (mat4-create-transform (make-vec3 1.0 0.0 0.0) (make-vec3 1.0 1.0 1.0 ) (quat-from-axis-angle (make-vec3 0 0 1) *object-angle*) ))
 
 (define (vertex-shader v model-view-projection)
   ( let ((pos (vec4-mat4-mul (vertex-position v) model-view-projection) ) )
         (make-vertex pos (vertex-normal v) (vertex-uv v) (make-vec4 1 1 1 1) )
   )
 )
+(define (fragment-shader attributes primitive-id) 
+  (define primitive-color (list (make-vec4 0 0 1 1) (make-vec4 0 0 1 1) 
+                                (make-vec4 0 1 0 1) (make-vec4 0 1 0 1)
+                                (make-vec4 1 0 0 1) (make-vec4 1 0 0 1) 
+                                (make-vec4 1 1 0 1) (make-vec4 1 1 0 1)
+                                (make-vec4 1 0 1 1) (make-vec4 1 0 1 1)
+                                (make-vec4 0 1 1 1) (make-vec4 0 1 1 1)))
 
-(define (fragment-shader f) (make-vec4 0.0 0.0 1.0 1.0))
-(define *pipeline* (make-pipeline vertex-shader fragment-shader *framebuffer* ))
+  (list-ref primitive-color (modulo primitive-id (length primitive-color)))
+)
+
+(define *pipeline* (make-pipeline vertex-shader fragment-shader depth-test-lequal *framebuffer* ))
 
 (define (update-scene) 
   (set! *view-matrix* (mat4-inverse (mat4-create-transform *camera-position* (make-vec3 1.0 1.0 1.0 ) *camera-orientation* ) ))
   (set! *object-angle* (+ *object-angle* *object-angle-step* ))
-  (set! *model-matrix* (mat4-create-transform (make-vec3 0.0 0.0 0.0) (make-vec3 1.0 1.0 1.0 ) (quat-from-axis-angle (make-vec3 0 1 0) *object-angle*) ))
+  (set! *model-matrix0* (mat4-create-transform (make-vec3 -1.0 0.0 0.0) (make-vec3 1.0 1.0 1.0 ) (quat-from-axis-angle (make-vec3 0 1 0) *object-angle*) ))
+  (set! *model-matrix1* (mat4-create-transform (make-vec3 1.0 0.0 0.0) (make-vec3 1.0 1.0 1.0 ) (quat-from-axis-angle (make-vec3 1 0 0) *object-angle*) ))
 )
 
 (define (render-scene) 
-  (let ( (mvp (mat4-mat4-mul (mat4-mat4-mul *model-matrix* *view-matrix*) *projection-matrix* ) ))
-        (framebuffer-clear! *framebuffer* (make-vec4 1 1 1 1) 0)     
-        (render-mesh *cube-mesh* mvp *pipeline*)
+  (let ( (vp (mat4-mat4-mul *view-matrix* *projection-matrix* ) ) )
+        (framebuffer-clear! *framebuffer* (make-vec4 0 0 0 1) 1)     
+        (render-mesh *cube-mesh* (mat4-mat4-mul *model-matrix0* vp) *pipeline*)
+        (render-mesh *cube-mesh* (mat4-mat4-mul *model-matrix1* vp) *pipeline*)
   )
 )
 

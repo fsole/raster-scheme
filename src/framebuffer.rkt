@@ -32,7 +32,8 @@
 (define (buffer2D-clear buffer value) 
     (define (clear index) 
         (if (< index (*  (buffer 0)  (buffer 1) ))
-            (vector-set! (buffer 2) index value) (clear (+ index 1))
+            (begin (vector-set! (buffer 2) index value) (clear (+ index 1)))
+            #t
         )
     )
     (clear 0)

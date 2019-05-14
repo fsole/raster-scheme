@@ -106,12 +106,9 @@
     )
 )
 
-
-
-
 (define (make-mesh vertices indices)
     (lambda (s) ( cond ( (= s 0) vertices)
-                      ( (= s 1) indices))
+                       ( (= s 1) indices))
     )
 )
 
