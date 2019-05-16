@@ -8,22 +8,23 @@
 (require "mesh.rkt")
 (require "framebuffer.rkt")
 (require "pipeline.rkt")
+(require "actor.rkt")
+(require "camera.rkt")
 (require "rasterizer.rkt")
 
-
 ;;Global variables
+
+;;Window
 (define *window-name* "raster-scheme")
 (define *window-width* 300)
 (define *window-height* 300)
+
+;;Framebuffer
 (define *framebuffer-width* 200)
 (define *framebuffer-height* 200)
-
-(define *camera-position* (make-vec3 0.0 0.0 -4.0) )
-(define *camera-orientation* (quat-from-axis-angle (make-vec3 0 1 0) 0.0 ))
-(define *object-angle* 0.0)
-(define *object-angle-step* 0.1)
-
 (define *framebuffer* (make-framebuffer *framebuffer-width* *framebuffer-height*))
+
+;;Meshes
 (define *bitmap* (make-bitmap (framebuffer-width *framebuffer*) (framebuffer-height *framebuffer*) #t) )
 (define *cube-mesh* (make-mesh (list (make-vertex (make-vec4 -0.5  0.5 -0.5 1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0))
                                      (make-vertex (make-vec4  0.5  0.5 -0.5 1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0))
@@ -40,16 +41,17 @@
                                            4 0 5 5 0 1
                                            2 6 3 3 6 7) ) )
 
+;;Actors
+(define *camera* (make-camera (make-vec3 0.0 0.0 -4.0) (quat-from-axis-angle (make-vec3 0 1 0) 0.0) 1.2 0.1 100.0 1.0))
+(define *object-angle* 0.0)
+(define *object-angle-step* 0.1)
+(define *actor0* (make-actor *cube-mesh* (make-vec3 -1.0 0.0 0.0) (make-vec3 1.0 1.0 1.0 ) (quat-from-axis-angle (make-vec3 0 1 0) *object-angle*)))
+(define *actor1* (make-actor *cube-mesh* (make-vec3  1.0 0.0 0.0) (make-vec3 1.0 1.0 1.0 ) (quat-from-axis-angle (make-vec3 1 0 0) *object-angle*)))
 
-(define *projection-matrix* (mat4-create-perspective-projection 1.2 1.0 0.1 100.0))
-(define *view-matrix* (mat4-inverse (mat4-create-transform *camera-position* (make-vec3 1.0 1.0 1.0 ) *camera-orientation* ) ))
-
-(define *model-matrix0* (mat4-create-transform (make-vec3 -1.0 0.0 0.0) (make-vec3 1.0 1.0 1.0 ) (quat-from-axis-angle (make-vec3 0 1 0) *object-angle*) ))
-(define *model-matrix1* (mat4-create-transform (make-vec3 1.0 0.0 0.0) (make-vec3 1.0 1.0 1.0 ) (quat-from-axis-angle (make-vec3 0 0 1) *object-angle*) ))
-
+;;Pipeline
 (define (vertex-shader v model-view-projection)
   ( let ((pos (vec4-mat4-mul (vertex-position v) model-view-projection) ) )
-        (make-vertex pos (vertex-normal v) (vertex-uv v) (make-vec4 1 1 1 1) )
+      (make-vertex pos (vertex-normal v) (vertex-uv v) (make-vec4 1 1 1 1) )
   )
 )
 (define (fragment-shader attributes primitive-id) 
@@ -65,21 +67,18 @@
 
 (define *pipeline* (make-pipeline vertex-shader fragment-shader depth-test-lequal *framebuffer* ))
 
-(define (update-scene) 
-  (set! *view-matrix* (mat4-inverse (mat4-create-transform *camera-position* (make-vec3 1.0 1.0 1.0 ) *camera-orientation* ) ))
-  (set! *object-angle* (+ *object-angle* *object-angle-step* ))
-  (set! *model-matrix0* (mat4-create-transform (make-vec3 -1.0 0.0 0.0) (make-vec3 1.0 1.0 1.0 ) (quat-from-axis-angle (make-vec3 0 1 0) *object-angle*) ))
-  (set! *model-matrix1* (mat4-create-transform (make-vec3 1.0 0.0 0.0) (make-vec3 1.0 1.0 1.0 ) (quat-from-axis-angle (make-vec3 1 0 0) *object-angle*) ))
+
+(define (update-scene)  
+  (set! *object-angle* (- *object-angle* *object-angle-step* ))
+  (actor-set-orientation! *actor0* (quat-from-axis-angle (make-vec3 0 1 0) *object-angle*))
+  (actor-set-orientation! *actor1* (quat-from-axis-angle (make-vec3 1 0 0) *object-angle*))  
 )
 
 (define (render-scene) 
-  (let ( (vp (mat4-mat4-mul *view-matrix* *projection-matrix* ) ) )
-        (framebuffer-clear! *framebuffer* (make-vec4 0 0 0 1) 1)     
-        (render-mesh *cube-mesh* (mat4-mat4-mul *model-matrix0* vp) *pipeline*)
-        (render-mesh *cube-mesh* (mat4-mat4-mul *model-matrix1* vp) *pipeline*)
-  )
+  (framebuffer-clear! *framebuffer* (make-vec4 0 0 0 1) 1)     
+  (render-mesh (actor-mesh *actor0*) (mat4-mat4-mul (actor-get-transform *actor0*) (camera-view-projection-matrix *camera*)) *pipeline*)
+  (render-mesh (actor-mesh *actor1*) (mat4-mat4-mul (actor-get-transform *actor1*) (camera-view-projection-matrix *camera*)) *pipeline*) 
 )
-
 
 ;;Window and OpenGL context
 (define gl-canvas%
@@ -119,17 +118,17 @@
 
     (define/override (on-char e)
         (case (send e get-key-code)
-          ((left)
-            (set! *camera-position* (make-vec3 (+ (vec3-x *camera-position*) 0.1 ) (vec3-y *camera-position*) (vec3-z *camera-position*)))
+          ((left)            
+            (camera-set-position! *camera* (vec3-add (camera-position *camera* ) (make-vec3 0.1 0.0 0.0 )))
           )
-          ((right) 
-            (set! *camera-position* (make-vec3 (- (vec3-x *camera-position*) 0.1 ) (vec3-y *camera-position*) (vec3-z *camera-position*)))
+          ((right)
+            (camera-set-position! *camera* (vec3-add (camera-position *camera* ) (make-vec3 -0.1 0.0 0.0 )))
           )
           ((up) 
-            (set! *camera-position* (make-vec3 (vec3-x *camera-position*) (vec3-y *camera-position*) (+ (vec3-z *camera-position*) 0.1 ) ))
+            (camera-set-position! *camera* (vec3-add (camera-position *camera* ) (make-vec3 0.0 0.0 0.1 )))
           )
           ((down)
-            (set! *camera-position* (make-vec3 (vec3-x *camera-position*) (vec3-y *camera-position*) (- (vec3-z *camera-position*) 0.1 ) ))
+            (camera-set-position! *camera* (vec3-add (camera-position *camera* ) (make-vec3 0.0 0.0 -0.1 )))
           )
         )
     )
