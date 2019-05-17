@@ -12,8 +12,6 @@
 (require "camera.rkt")
 (require "rasterizer.rkt")
 
-;;Global variables
-
 ;;Window
 (define *window-name* "raster-scheme")
 (define *window-width* 300)
@@ -23,9 +21,9 @@
 (define *framebuffer-width* 200)
 (define *framebuffer-height* 200)
 (define *framebuffer* (make-framebuffer *framebuffer-width* *framebuffer-height*))
+(define *bitmap* (make-bitmap (framebuffer-width *framebuffer*) (framebuffer-height *framebuffer*) #t) )
 
 ;;Meshes
-(define *bitmap* (make-bitmap (framebuffer-width *framebuffer*) (framebuffer-height *framebuffer*) #t) )
 (define *cube-mesh* (make-mesh (list (make-vertex (make-vec4 -0.5  0.5 -0.5 1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0))
                                      (make-vertex (make-vec4  0.5  0.5 -0.5 1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0))
                                      (make-vertex (make-vec4 -0.5 -0.5 -0.5 1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0))
@@ -88,14 +86,12 @@
     (define/override (on-paint)
       (with-gl-context (lambda () (update-scene)
                                   (render-scene)
-                                  (present-frame *framebuffer*))
-      )
+                                  (present-frame *framebuffer*)))
     )
     
     (define/override (on-size width height)
       (with-gl-context (lambda () (glViewport 0 0 width height) 
-                                  (on-paint))
-      )
+                                  (on-paint)))
     )
  
     (define/private (present-frame framebuffer )
@@ -117,20 +113,20 @@
     )
 
     (define/override (on-char e)
-        (case (send e get-key-code)
-          ((left)            
-            (camera-set-position! *camera* (vec3-add (camera-position *camera* ) (make-vec3 0.1 0.0 0.0 )))
-          )
-          ((right)
-            (camera-set-position! *camera* (vec3-add (camera-position *camera* ) (make-vec3 -0.1 0.0 0.0 )))
-          )
-          ((up) 
-            (camera-set-position! *camera* (vec3-add (camera-position *camera* ) (make-vec3 0.0 0.0 0.1 )))
-          )
-          ((down)
-            (camera-set-position! *camera* (vec3-add (camera-position *camera* ) (make-vec3 0.0 0.0 -0.1 )))
-          )
+      (case (send e get-key-code)
+        ((left)            
+          (camera-set-position! *camera* (vec3-add (camera-position *camera* ) (make-vec3 0.1 0.0 0.0 )))
         )
+        ((right)
+          (camera-set-position! *camera* (vec3-add (camera-position *camera* ) (make-vec3 -0.1 0.0 0.0 )))
+        )
+        ((up) 
+          (camera-set-position! *camera* (vec3-add (camera-position *camera* ) (make-vec3 0.0 0.0 0.1 )))
+        )
+        ((down)
+          (camera-set-position! *camera* (vec3-add (camera-position *camera* ) (make-vec3 0.0 0.0 -0.1 )))
+        )
+      )
     )
 
     (super-instantiate () (style '(gl)))
