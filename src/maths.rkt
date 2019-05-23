@@ -158,9 +158,9 @@
 ;;  mat3  ;;
 ;;;;;;;;;;;;
 (define (make-mat3 v0 v1 v2) 
-    (lambda (s) (cond(( = s 0 ) v0 )
-                   (( = s 1 ) v1 )
-                   (( = s 2 ) v2 ))))
+    (lambda (s) (cond (( = s 0 ) v0 )
+                      (( = s 1 ) v1 )
+                      (( = s 2 ) v2 ))))
                                                  
 (define (mat3-get-row mat row) (mat row))
 (define (mat3-get-column mat column) ( make-vec3 ( (mat 0) column )

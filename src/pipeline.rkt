@@ -16,21 +16,20 @@
 
 (define (make-pipeline vertex-shader fragment-shader depth-test-func framebuffer)
     (lambda (s) (cond 
-                    ( (= s 0) vertex-shader )
-                    ( (= s 1) fragment-shader )
-                    ( (= s 2) depth-test-func )
-                    ( (= s 3) framebuffer )
+                    ((eq? s 'vertex-shader) vertex-shader)
+                    ((eq? s 'fragment-shader) fragment-shader)
+                    ((eq? s 'depth-test-func) depth-test-func)
+                    ((eq? s 'frambuffer) framebuffer)
                 )
     )
 )
-
-(define (pipeline-vertex-shader   pipeline) (pipeline 0))
-(define (pipeline-fragment-shader pipeline) (pipeline 1))
-(define (pipeline-depth-test-func pipeline) (pipeline 2))
-(define (pipeline-framebuffer     pipeline) (pipeline 3))
-
+(define (pipeline-vertex-shader   pipeline) (pipeline 'vertex-shader))
+(define (pipeline-fragment-shader pipeline) (pipeline 'fragment-shader))
+(define (pipeline-depth-test-func pipeline) (pipeline 'depth-test-func))
+(define (pipeline-framebuffer     pipeline) (pipeline 'frambuffer))
 
 
+;;Predefined depth test functions
 (define (depth-test-less fragment-depth framebuffer-depth  ) (< fragment-depth framebuffer-depth ) )
 (define (depth-test-greater fragment-depth framebuffer-depth  ) (> fragment-depth framebuffer-depth ) )
 
