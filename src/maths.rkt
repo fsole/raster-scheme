@@ -41,9 +41,10 @@
          quat-y
          quat-z
          quat-w
-         quat-from-axis-angle
          quat-normalize
          quat-identity
+         quat-from-axis-angle
+         quat-quat-mul         
          quat-print)
 
 (provide make-mat3
@@ -138,6 +139,9 @@
 (define (quat-z v) (v 2))
 (define (quat-w v) (v 3))
 
+(define (quat-normalize q) ( let ((length (sqrt (vec4-dot q q)))) (make-quat (/ (quat-x q) length) (/ (quat-y q) length) (/ (quat-z q) length) (/ (quat-w q) length) )))
+(define quat-identity (make-quat 0 0 0 1) )
+
 (define (quat-from-axis-angle axis angle)
     (let(
             (angle-sin (sin (* angle -0.5)))
@@ -150,8 +154,13 @@
     )
 )
 
-(define (quat-normalize q) ( let ((length (sqrt (vec4-dot q q)))) (make-quat (/ (quat-x q) length) (/ (quat-y q) length) (/ (quat-z q) length) (/ (quat-w q) length) )))
-(define quat-identity (make-quat 0 0 0 1) )
+(define (quat-quat-mul q0 q1)
+    (make-quat  (+ (* (quat-y q1) (quat-z q0)) (* (quat-w q1) (quat-x q0)) (* (quat-x q1) (quat-w q0)) (- (* (quat-z q1) (quat-y q0))))
+                (+ (* (quat-z q1) (quat-x q0)) (* (quat-w q1) (quat-y q0)) (* (quat-y q1) (quat-w q0)) (- (* (quat-x q1) (quat-z q0))))    
+                (+ (* (quat-x q1) (quat-y q0)) (* (quat-w q1) (quat-z q0)) (* (quat-z q1) (quat-w q0)) (- (* (quat-y q1) (quat-x q0))))
+                (+ (* (quat-w q1) (quat-w q0)) (- (* (quat-x q1) (quat-x q0))) (- (* (quat-y q1) (quat-y q0))) (- (* (quat-z q1) (quat-z q0)))))
+)
+
 (define (quat-print v )(begin (display (v 0)) (display "  ") (display (v 1)) (display "  ") (display (v 2)) (display "  ")(display (v 3)) ))
 
 ;;;;;;;;;;;;

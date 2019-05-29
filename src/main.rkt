@@ -17,6 +17,9 @@
 (define *window-width*  300)
 (define *window-height* 300)
 
+(define *mouse-position* (make-vec2 0.0 0.0))
+(define *mouse-sensitivity* 0.01)
+
 ;;Framebuffer
 (define *framebuffer-width* 200)
 (define *framebuffer-height* 200)
@@ -42,7 +45,7 @@
                                       2 6 3 3 6 7)))
 
 ;Camera
-(define *camera* (make-camera (make-vec3 0.0 0.0 -4.0) (quat-from-axis-angle (make-vec3 0 1 0) 0.0) 1.2 0.1 100.0 1.0))
+(define *camera* (make-camera (make-vec3 0.0 0.0 -4.0) 0.0 0.0 1.2 0.1 100.0 1.0))
 
 ;;Actors
 (define *object-angle* 0.0)
@@ -121,18 +124,33 @@
 
     (define/override (on-char e)
       (case (send e get-key-code)
-        ((left)            
-          (camera-set-position! *camera* (vec3-add (camera-position *camera*) (make-vec3 0.1 0.0 0.0)))
+        ((or left #\a )
+          (camera-move! *camera* 0.1 0.0)
         )
-        ((right)
-          (camera-set-position! *camera* (vec3-add (camera-position *camera*) (make-vec3 -0.1 0.0 0.0)))
+        ((or right #\d)
+          (camera-move! *camera* -0.1 0.0)
         )
-        ((up) 
-          (camera-set-position! *camera* (vec3-add (camera-position *camera*) (make-vec3 0.0 0.0 0.1)))
+        ((or up #\w) 
+          (camera-move! *camera* 0.0 0.1)
         )
-        ((down)
-          (camera-set-position! *camera* (vec3-add (camera-position *camera*) (make-vec3 0.0 0.0 -0.1)))
+        ((or down #\s)
+          (camera-move! *camera* 0.0 -0.1)
         )
+      )
+    )
+
+    (define/override (on-event e)
+      (let(
+            (x (send e get-x))
+            (y (send e get-y))
+          )
+          (cond
+            ((send e button-down?) (set! *mouse-position* (make-vec2 x y)))
+            ((send e dragging?)
+              (camera-rotate! *camera* (* (- y (vec2-y *mouse-position*)) *mouse-sensitivity*) (* (- x (vec2-x *mouse-position*)) *mouse-sensitivity*) )
+              (set! *mouse-position* (make-vec2 x y))
+            )
+          )
       )
     )
 
