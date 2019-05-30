@@ -26,7 +26,8 @@
          mesh-vertices
          mesh-indices
          mesh-get-triangle-count
-         mesh-get-triangle)
+         mesh-get-triangle
+         make-cube-mesh)
 
 
 ;aabb
@@ -122,4 +123,22 @@
                         (list-ref (mesh-vertices mesh) (list-ref (mesh-indices mesh) (+ index 2) ) )
         )
     )
+)
+
+(define (make-cube-mesh halfSize)
+  (make-mesh (list (make-vertex (make-vec4 (- halfSize)  halfSize (- halfSize)  1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0))
+                                (make-vertex (make-vec4  halfSize  halfSize (- halfSize)  1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0))
+                                (make-vertex (make-vec4 (- halfSize) (- halfSize) (- halfSize)  1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0))
+                                (make-vertex (make-vec4  halfSize (- halfSize) (- halfSize)  1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0))
+                                (make-vertex (make-vec4 (- halfSize)  halfSize  halfSize  1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0))
+                                (make-vertex (make-vec4  halfSize  halfSize  halfSize  1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0))
+                                (make-vertex (make-vec4 (- halfSize) (- halfSize)  halfSize  1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0))
+                                (make-vertex (make-vec4  halfSize (- halfSize)  halfSize  1.0) (make-vec3 0 0 1) (make-vec2 0 0) (make-vec3 1 0 0)))
+
+             (list 0 2 1 1 2 3
+                   1 3 5 5 3 7
+                   5 7 4 4 7 6  
+                   4 6 0 0 6 2
+                   4 0 5 5 0 1
+                   2 6 3 3 6 7))
 )

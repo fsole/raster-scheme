@@ -24,7 +24,7 @@
     (define (set-angle-x! angle) (set! angle-x angle))
     (define (set-angle-y! angle) (set! angle-y angle))
     (let(
-            (actor (make-actor 'null position (make-vec3 1 1 1) (compute-orientation angle-x angle-y)))
+            (actor (make-actor 'null position (make-vec3 1 1 1) (compute-orientation angle-x angle-y) 'null))
             (projection-matrix (mat4-create-perspective-projection 1.2 1.0 0.1 100.0))
         )
         (lambda (s)
